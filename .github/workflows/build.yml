@@ -1,0 +1,50 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: Build APK
+      run: |
+        chmod +x gradlew
+        ./gradlew assembleDebug
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: C助手-Debug
+        path: app/build/outputs/apk/debug/*.apk
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: github.ref == 'refs/heads/main'
+      with:
+        files: app/build/outputs/apk/debug/*.apk
+        tag_name: v1.0.${{ github.run_number }}
+        name: C助手 v1.0.${{ github.run_number }}
+        body: |
+          C助手 - 您的智能手机管理助手
+          
+          功能：
+          - 悬浮球快捷操作
+          - 桌面智能整理
+          - 存储自动清理
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
